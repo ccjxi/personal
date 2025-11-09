@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue API调用示例</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios@0.21.4/dist/axios.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color: #333;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    }
+    header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      opacity: 0.8;
+      font-size: 16px;
+    }
+    .content {
+      padding: 30px;
+    }
+    .card {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+      font-weight: bold;
+    }
+    .user-info {
+      flex: 1;
+    }
+    .user-name {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #2c3e50;
+    }
+    .user-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .detail-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .icon {
+      color: #6a11cb;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    button {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(106, 17, 203, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .loading {
+      text-align: center;
+      padding: 30px;
+      font-size: 18px;
+      color: #6a11cb;
+    }
+    .spinner {
+      border: 4px solid rgba(106, 17, 203, 0.3);
+      border-radius: 50%;
+      border-top: 4px solid #6a11cb;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .code-block {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 25px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+    .api-url {
+      background: #34495e;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #3498db;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <header>
+        <h1>Vue API调用示例</h1>
+        <p class="subtitle">演示如何在Vue应用中调用API接口并展示数据</p>
+      </header>
+      
+      <div class="content">
+        <div class="card">
+          <h2>用户信息</h2>
+          <p>点击下方按钮从API获取用户数据</p>
+          
+          <div v-if="error" class="error">
+            {{ error }}
+          </div>
+          
+          <div v-if="loading" class="loading">
+            <div class="spinner"></div>
+            正在加载用户数据...
+          </div>
+          
+          <div v-else-if="user" class="user-card">
+            <div class="avatar">
+              {{ user.name.charAt(0) }}
+            </div>
+            <div class="user-info">
+              <div class="user-name">{{ user.name }}</div>
+              <div class="user-email">{{ user.email }}</div>
+              <div class="user-details">
+                <div class="detail-item">
+                  <span class="icon">📱</span>
+                  <span>{{ user.phone }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="icon">🏢</span>
+                  <span>{{ user.company.name }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="icon">🌐</span>
+                  <span>{{ user.website }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="icon">📍</span>
+                  <span>{{ user.address.city }}, {{ user.address.street }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else class="loading">
+            暂无数据，请点击按钮获取
+          </div>
+          
+          <div class="controls">
+            <button @click="fetchUser" :disabled="loading">
+              {{ loading ? '获取中...' : '获取用户信息' }}
+            </button>
+            <button @click="clearData" :disabled="loading">
+              清除数据
+            </button>
+          </div>
+        </div>
+        
+        <div class="card">
+          <h2>API调用说明</h2>
+          <p>这个示例使用了JSONPlaceholder提供的模拟API：</p>
+          <div class="api-url">https://jsonplaceholder.typicode.com/users/1</div>
+          
+          <div class="code-block">
+            // Vue中调用API的基本代码结构<br><br>
+            methods: {<br>
+            &nbsp;&nbsp;async fetchUser() {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;this.loading = true;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;this.error = null;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;try {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;const response = await axios.get('API_URL');<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.user = response.data;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;} catch (err) {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.error = '获取数据失败: ' + err.message;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;} finally {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.loading = false;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+            &nbsp;&nbsp;}<br>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        user: null,
+        loading: false,
+        error: null
+      },
+      methods: {
+        async fetchUser() {
+          this.loading = true;
+          this.error = null;
+          
+          try {
+            // 使用JSONPlaceholder提供的模拟API
+            const response = await axios.get('https://jsonplaceholder.typicode.com/users/1');
+            this.user = response.data;
+          } catch (err) {
+            this.error = '获取数据失败: ' + err.message;
+            console.error('API调用错误:', err);
+          } finally {
+            this.loading = false;
+          }
+        },
+        clearData() {
+          this.user = null;
+          this.error = null;
+        }
+      },
+      mounted() {
+        // 组件加载时自动获取用户数据
+        this.fetchUser();
+      }
+    });
+  </script>
+</body>
+</html>
